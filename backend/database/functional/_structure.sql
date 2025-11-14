@@ -136,3 +136,12 @@ CREATE NONCLUSTERED INDEX [ixTask_UserResponsible]
 ON [functional].[task]([idAccount], [idUserResponsible])
 WHERE [deleted] = 0;
 GO
+
+/**
+ * @index ixTask_Priority Optimizes queries filtered or sorted by priority.
+ * @type Search
+ */
+CREATE NONCLUSTERED INDEX [ixTask_Priority]
+ON [functional].[task]([idAccount], [priority])
+WHERE [deleted] = 0;
+GO

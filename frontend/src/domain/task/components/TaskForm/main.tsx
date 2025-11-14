@@ -1,13 +1,12 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useCreateTask } from '../../hooks';
-import { taskCreateSchema } from '../../types';
-import { PRIORITIES } from '../../constants';
+import { taskCreateSchema, PRIORITIES } from '../../constants';
 import type { TaskFormProps, TaskFormData } from './types';
 
 /**
  * @component TaskForm
- * @summary Form for creating a new task.
+ * @summary Form for creating a new task with priority selection.
  * @domain task
  * @type domain-component
  * @category form
@@ -34,7 +33,6 @@ export const TaskForm = ({ onSuccess, onCancel }: TaskFormProps) => {
       onSuccess(newTask);
     },
     onError: (error) => {
-      // Here you could show a toast notification
       alert(`Error: ${error.message}`);
     },
   });
@@ -42,7 +40,6 @@ export const TaskForm = ({ onSuccess, onCancel }: TaskFormProps) => {
   const onSubmit = (data: TaskFormData) => {
     const payload = {
       ...data,
-      // Ensure empty strings are sent as null for optional fields
       descricao: data.descricao || null,
       data_vencimento: data.data_vencimento || null,
     };

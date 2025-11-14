@@ -2,6 +2,14 @@ import { z } from 'zod';
 
 export type Priority = 'Alta' | 'Média' | 'Baixa';
 
+export interface PriorityConfig {
+  value: Priority;
+  label: string;
+  numericValue: number;
+  color: string;
+  icon: string;
+}
+
 export interface Task {
   id: number;
   titulo: string;
@@ -9,10 +17,29 @@ export interface Task {
   data_vencimento?: string;
   prioridade: Priority;
   data_criacao: string;
-  // ... other fields from a full task object
 }
 
-export type TaskCreatePayload = z.infer<typeof taskCreateSchema>;
+export interface TasksByPriority {
+  alta: Task[];
+  media: Task[];
+  baixa: Task[];
+}
+
+export interface PriorityDistribution {
+  alta: number;
+  media: number;
+  baixa: number;
+  total: number;
+}
+
+export interface PriorityHistoryEntry {
+  id: number;
+  prioridade_anterior: Priority;
+  prioridade_nova: Priority;
+  motivo_alteracao?: string;
+  data_alteracao: string;
+  usuario_alteracao: number;
+}
 
 export const taskCreateSchema = z.object({
   titulo: z
@@ -31,7 +58,6 @@ export const taskCreateSchema = z.object({
     .refine(
       (date) => {
         if (!date) return true;
-        // Compare only the date part, ignoring time
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const dueDate = new Date(date);
@@ -44,3 +70,16 @@ export const taskCreateSchema = z.object({
     ),
   prioridade: z.enum(['Alta', 'Média', 'Baixa']).default('Média'),
 });
+
+export type TaskCreatePayload = z.infer<typeof taskCreateSchema>;
+
+export const priorityFilterSchema = z.object({
+  prioridades: z.array(z.enum(['Alta', 'Média', 'Baixa'])).optional(),
+  ordenacao: z.enum(['crescente', 'decrescente']).default('decrescente'),
+  agrupamento: z.boolean().default(false),
+  criterio_secundario: z
+    .enum(['data_criacao', 'data_vencimento', 'titulo', 'categoria'])
+    .default('data_vencimento'),
+});
+
+export type PriorityFilterPayload = z.infer<typeof priorityFilterSchema>;
