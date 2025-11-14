@@ -50,8 +50,10 @@ BEGIN
      * @column {NVARCHAR} title - Task title
      * @column {NVARCHAR} description - Task description
      * @column {DATE} dueDate - Task due date
+     * @column {TIME} dueTime - Task due time
      * @column {TINYINT} priority - Task priority level
      * @column {DATETIME2} dateCreated - Task creation date
+     * @column {DATETIME2} dateModified - Task modification date
      */
     SELECT
         [tsk].[idTask],
@@ -62,8 +64,10 @@ BEGIN
         [tsk].[title],
         [tsk].[description],
         [tsk].[dueDate],
+        [tsk].[dueTime],
         [tsk].[priority],
-        [tsk].[dateCreated]
+        [tsk].[dateCreated],
+        [tsk].[dateModified]
     FROM [functional].[task] [tsk]
     WHERE [tsk].[idAccount] = @idAccount
         AND [tsk].[idTask] = @idTask

@@ -1,10 +1,17 @@
 import { Router } from 'express';
 import { validateRequest } from '@/middleware/validationMiddleware';
-import { taskCreateSchema } from '@/services/task/taskValidation';
+import { taskCreateSchema, taskSearchSchema } from '@/services/task/taskValidation';
 import * as taskController from '@/api/v1/internal/task/controller';
 import taskPriorityRoutes from './taskPriorityRoutes';
+import taskDueDateRoutes from './taskDueDateRoutes';
 
 const router = Router();
+
+/**
+ * GET /api/v1/internal/task/search
+ * Searches for tasks.
+ */
+router.get('/search', validateRequest(taskSearchSchema), taskController.searchTasksHandler);
 
 /**
  * POST /api/v1/internal/task
@@ -16,5 +23,10 @@ router.post('/', validateRequest(taskCreateSchema), taskController.createTaskHan
  * Priority-related routes
  */
 router.use('/', taskPriorityRoutes);
+
+/**
+ * Due date-related routes
+ */
+router.use('/', taskDueDateRoutes);
 
 export default router;

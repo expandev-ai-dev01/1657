@@ -6,6 +6,8 @@ import type {
   PriorityDistribution,
   PriorityHistoryEntry,
   PriorityFilterPayload,
+  TaskSearchQuery,
+  PaginatedTasksResponse,
 } from '../types';
 
 /**
@@ -22,6 +24,23 @@ export const taskService = {
    */
   async createTask(payload: TaskCreatePayload): Promise<Task> {
     const response = await authenticatedClient.post<Task>('/task', payload);
+    return response.data;
+  },
+
+  /**
+   * @endpoint GET /api/v1/internal/task/search
+   * @summary Searches for tasks based on various criteria.
+   */
+  async searchTasks(query: TaskSearchQuery): Promise<PaginatedTasksResponse> {
+    const params = new URLSearchParams();
+
+    Object.entries(query).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params.append(key, String(value));
+      }
+    });
+
+    const response = await authenticatedClient.get(`/task/search?${params.toString()}`);
     return response.data;
   },
 

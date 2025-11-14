@@ -4,6 +4,7 @@ import { LoadingSpinner } from '@/core/components';
 import { AppLayout } from '@/pages/layouts';
 
 const HomePage = lazy(() => import('@/pages/Home'));
+const SearchPage = lazy(() => import('@/pages/Search'));
 const NotFoundPage = lazy(() => import('@/pages/NotFound'));
 
 export const router = createBrowserRouter([
@@ -16,6 +17,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<LoadingSpinner />}>
             <HomePage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'search',
+        element: (
+          <Suspense fallback={<LoadingSpinner />}>
+            <SearchPage />
           </Suspense>
         ),
       },

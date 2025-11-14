@@ -1,6 +1,6 @@
 /**
  * @module task
- * @summary Manages task-related operations, including creation, listing, and state management.
+ * @summary Manages task-related operations, including creation, listing, searching and state management.
  * @domain functional
  * @dependencies react-hook-form, zod, @tanstack/react-query
  * @version 1.0.0

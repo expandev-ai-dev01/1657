@@ -1,6 +1,9 @@
 import { z } from 'zod';
 
 export type Priority = 'Alta' | 'Média' | 'Baixa';
+export type TaskStatus = 'all' | 'pending' | 'completed';
+export type SortBy = 'relevance' | 'dateCreated' | 'dueDate' | 'priority';
+export type SortDirection = 'asc' | 'desc';
 
 export interface PriorityConfig {
   value: Priority;
@@ -17,6 +20,7 @@ export interface Task {
   data_vencimento?: string;
   prioridade: Priority;
   data_criacao: string;
+  status: 'pending' | 'completed';
 }
 
 export interface TasksByPriority {
@@ -83,3 +87,26 @@ export const priorityFilterSchema = z.object({
 });
 
 export type PriorityFilterPayload = z.infer<typeof priorityFilterSchema>;
+
+export interface TaskSearchQuery {
+  searchTerm?: string;
+  status?: TaskStatus;
+  priority?: number; // 0=Low, 1=Medium, 2=High
+  idCategory?: number;
+  dueDateStart?: string; // YYYY-MM-DD
+  dueDateEnd?: string; // YYYY-MM-DD
+  sortBy?: SortBy;
+  sortDirection?: SortDirection;
+  page?: number;
+  pageSize?: number;
+}
+
+export interface PaginatedTasksResponse {
+  data: Task[];
+  metadata: {
+    page: number;
+    pageSize: number;
+    total: number;
+    pageCount: number;
+  };
+}

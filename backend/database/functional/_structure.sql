@@ -11,6 +11,22 @@ GO
 -- Feature-specific tables (e.g., tasks, categories) will be defined here.
 
 /**
+ * @table category Stores user-defined categories for tasks.
+ * @multitenancy true
+ * @softDelete true
+ * @alias cat
+ */
+CREATE TABLE [functional].[category] (
+  [idCategory] INTEGER IDENTITY(1, 1) NOT NULL,
+  [idAccount] INTEGER NOT NULL,
+  [name] NVARCHAR(100) NOT NULL,
+  [dateCreated] DATETIME2 NOT NULL,
+  [dateModified] DATETIME2 NOT NULL,
+  [deleted] BIT NOT NULL
+);
+GO
+
+/**
  * @table task Stores user tasks with details like title, due date, and priority.
  * @multitenancy true
  * @softDelete true
@@ -25,10 +41,53 @@ CREATE TABLE [functional].[task] (
   [title] NVARCHAR(255) NOT NULL,
   [description] NVARCHAR(2000) NULL,
   [dueDate] DATE NULL,
+  [dueTime] TIME NULL,
   [priority] TINYINT NOT NULL,
+  [completed] BIT NOT NULL,
   [dateCreated] DATETIME2 NOT NULL,
+  [dateModified] DATETIME2 NOT NULL,
   [deleted] BIT NOT NULL
 );
+GO
+
+-- Constraints for functional.category
+
+/**
+ * @primaryKey pkCategory
+ * @keyType Object
+ */
+ALTER TABLE [functional].[category]
+ADD CONSTRAINT [pkCategory] PRIMARY KEY CLUSTERED ([idCategory]);
+GO
+
+/**
+ * @default dfCategory_DateCreated Sets the creation date to the current UTC timestamp.
+ */
+ALTER TABLE [functional].[category]
+ADD CONSTRAINT [dfCategory_DateCreated] DEFAULT (GETUTCDATE()) FOR [dateCreated];
+GO
+
+/**
+ * @default dfCategory_DateModified Sets the modification date to the current UTC timestamp.
+ */
+ALTER TABLE [functional].[category]
+ADD CONSTRAINT [dfCategory_DateModified] DEFAULT (GETUTCDATE()) FOR [dateModified];
+GO
+
+/**
+ * @default dfCategory_Deleted Sets the default deleted status to false (0).
+ */
+ALTER TABLE [functional].[category]
+ADD CONSTRAINT [dfCategory_Deleted] DEFAULT (0) FOR [deleted];
+GO
+
+/**
+ * @index uqCategory_Account_Name Ensures category names are unique per account.
+ * @type Unique
+ */
+CREATE UNIQUE NONCLUSTERED INDEX [uqCategory_Account_Name]
+ON [functional].[category]([idAccount], [name])
+WHERE [deleted] = 0;
 GO
 
 -- Constraints for functional.task
@@ -54,10 +113,10 @@ GO
  * @foreignKey fkTask_Category Links task to a category.
  * @target functional.category
  */
--- ALTER TABLE [functional].[task]
--- ADD CONSTRAINT [fkTask_Category] FOREIGN KEY ([idCategory])
--- REFERENCES [functional].[category]([idCategory]);
--- GO
+ALTER TABLE [functional].[task]
+ADD CONSTRAINT [fkTask_Category] FOREIGN KEY ([idCategory])
+REFERENCES [functional].[category]([idCategory]);
+GO
 
 /**
  * @foreignKey fkTask_UserCreator Links task to the user who created it.
@@ -95,10 +154,24 @@ ADD CONSTRAINT [dfTask_Priority] DEFAULT (1) FOR [priority];
 GO
 
 /**
+ * @default dfTask_Completed Sets the default completed status to false (0).
+ */
+ALTER TABLE [functional].[task]
+ADD CONSTRAINT [dfTask_Completed] DEFAULT (0) FOR [completed];
+GO
+
+/**
  * @default dfTask_DateCreated Sets the creation date to the current UTC timestamp.
  */
 ALTER TABLE [functional].[task]
 ADD CONSTRAINT [dfTask_DateCreated] DEFAULT (GETUTCDATE()) FOR [dateCreated];
+GO
+
+/**
+ * @default dfTask_DateModified Sets the modification date to the current UTC timestamp.
+ */
+ALTER TABLE [functional].[task]
+ADD CONSTRAINT [dfTask_DateModified] DEFAULT (GETUTCDATE()) FOR [dateModified];
 GO
 
 /**

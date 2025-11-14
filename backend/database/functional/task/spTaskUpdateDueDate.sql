@@ -1,13 +1,13 @@
 /**
  * @summary
- * Updates an existing task, including priority changes.
+ * Updates the due date and/or due time for an existing task.
  *
- * @procedure spTaskUpdate
+ * @procedure spTaskUpdateDueDate
  * @schema functional
  * @type stored-procedure
  *
  * @endpoints
- * - PUT /api/v1/internal/task/:id
+ * - PATCH /api/v1/internal/task/:id/due-date
  *
  * @parameters
  * @param {INT} idAccount
@@ -16,53 +16,33 @@
  * @param {INT} idTask
  *   - Required: Yes
  *   - Description: The ID of the task to update.
- * @param {NVARCHAR(255)} title
- *   - Required: No
- *   - Description: Updated task title.
- * @param {NVARCHAR(2000)} description
- *   - Required: No
- *   - Description: Updated task description.
  * @param {DATE} dueDate
  *   - Required: No
- *   - Description: Updated due date.
+ *   - Description: Updated due date. If NULL, the due date will be removed.
  * @param {TIME} dueTime
  *   - Required: No
- *   - Description: Updated due time.
- * @param {TINYINT} priority
- *   - Required: No
- *   - Description: Updated priority level (0=Low, 1=Medium, 2=High).
- * @param {INT} idCategory
- *   - Required: No
- *   - Description: Updated category ID.
- * @param {INT} idUserResponsible
- *   - Required: No
- *   - Description: Updated responsible user ID.
+ *   - Description: Updated due time. Only valid if dueDate is provided.
  *
  * @returns {Task, 1, n} The updated task record.
  *
  * @testScenarios
- * - Update only the priority of a task.
- * - Update multiple fields including priority.
- * - Update due date and due time.
- * - Attempt to update a task with an invalid priority.
+ * - Update only the due date of a task.
+ * - Update both due date and due time.
+ * - Remove the due date (set to NULL).
+ * - Attempt to set due time without a due date.
+ * - Attempt to update a task with a past due date.
  * - Attempt to update a task that does not exist.
  */
-CREATE OR ALTER PROCEDURE [functional].[spTaskUpdate]
+CREATE OR ALTER PROCEDURE [functional].[spTaskUpdateDueDate]
     @idAccount INT,
     @idTask INT,
-    @title NVARCHAR(255) = NULL,
-    @description NVARCHAR(2000) = NULL,
     @dueDate DATE = NULL,
-    @dueTime TIME = NULL,
-    @priority TINYINT = NULL,
-    @idCategory INT = NULL,
-    @idUserResponsible INT = NULL
+    @dueTime TIME = NULL
 AS
 BEGIN
     SET NOCOUNT ON;
 
     DECLARE @currentDate DATE = GETUTCDATE();
-    DECLARE @isUpdatingDueDate BIT = 0;
 
     /**
      * @validation Ensure account ID and task ID are valid.
@@ -92,7 +72,7 @@ BEGIN
     END
 
     /**
-     * @validation Ensure due date is not in the past.
+     * @rule {BR-001} Due date cannot be in the past.
      * @throw {DueDateCannotBeInThePast}
      */
     IF @dueDate IS NOT NULL AND @dueDate < @currentDate
@@ -110,24 +90,18 @@ BEGIN
     END
 
     /**
-     * @validation Ensure title is not empty if provided.
-     * @throw {TitleCannotBeEmpty}
+     * @rule {BR-008} When removing due date, also remove due time.
      */
-    IF @title IS NOT NULL AND LTRIM(RTRIM(@title)) = ''
+    IF @dueDate IS NULL
     BEGIN
-        ;THROW 51000, 'TitleCannotBeEmpty', 1;
+        SET @dueTime = NULL;
     END
 
     BEGIN TRY
         UPDATE [functional].[task]
         SET
-            [title] = ISNULL(@title, [title]),
-            [description] = ISNULL(@description, [description]),
-            [dueDate] = ISNULL(@dueDate, [dueDate]),
-            [dueTime] = ISNULL(@dueTime, [dueTime]),
-            [priority] = ISNULL(@priority, [priority]),
-            [idCategory] = ISNULL(@idCategory, [idCategory]),
-            [idUserResponsible] = ISNULL(@idUserResponsible, [idUserResponsible]),
+            [dueDate] = @dueDate,
+            [dueTime] = @dueTime,
             [dateModified] = GETUTCDATE()
         WHERE [idTask] = @idTask
             AND [idAccount] = @idAccount

@@ -25,6 +25,9 @@
  * @param {DATE} dueDate
  *   - Required: No
  *   - Description: The due date for the task.
+ * @param {TIME} dueTime
+ *   - Required: No
+ *   - Description: The due time for the task. Only valid if dueDate is provided.
  * @param {TINYINT} priority
  *   - Required: No
  *   - Description: Priority level (0=Low, 1=Medium, 2=High). Defaults to 1.
@@ -40,7 +43,9 @@
  * @testScenarios
  * - Create a task with only the required fields.
  * - Create a task with all fields populated.
+ * - Create a task with due date and due time.
  * - Attempt to create a task with a due date in the past.
+ * - Attempt to create a task with due time but no due date.
  * - Attempt to create a task with an invalid priority level.
  */
 CREATE OR ALTER PROCEDURE [functional].[spTaskCreate]
@@ -49,6 +54,7 @@ CREATE OR ALTER PROCEDURE [functional].[spTaskCreate]
     @title NVARCHAR(255),
     @description NVARCHAR(2000) = NULL,
     @dueDate DATE = NULL,
+    @dueTime TIME = NULL,
     @priority TINYINT = 1, -- Default to Medium
     @idCategory INT = NULL,
     @idUserResponsible INT = NULL
@@ -68,12 +74,30 @@ BEGIN
     END
 
     /**
+     * @rule {BR-002} If due time is provided, due date must also be provided.
+     * @throw {DueTimeRequiresDueDate}
+     */
+    IF @dueTime IS NOT NULL AND @dueDate IS NULL
+    BEGIN
+        ;THROW 51000, 'DueTimeRequiresDueDate', 1;
+    END
+
+    /**
      * @validation Ensure due date is not in the past.
      * @throw {DueDateCannotBeInThePast}
      */
     IF @dueDate IS NOT NULL AND @dueDate < @currentDate
     BEGIN
         ;THROW 51000, 'DueDateCannotBeInThePast', 1;
+    END
+
+    /**
+     * @rule {BR-004} Due date cannot be more than 100 years in the future.
+     * @throw {DueDateTooFarInFuture}
+     */
+    IF @dueDate IS NOT NULL AND @dueDate > DATEADD(YEAR, 100, @currentDate)
+    BEGIN
+        ;THROW 51000, 'DueDateTooFarInFuture', 1;
     END
 
     /**
@@ -93,6 +117,7 @@ BEGIN
             [title],
             [description],
             [dueDate],
+            [dueTime],
             [priority]
         )
         OUTPUT INSERTED.*
@@ -104,6 +129,7 @@ BEGIN
             @title,
             @description,
             @dueDate,
+            @dueTime,
             ISNULL(@priority, 1) -- Default to Medium if NULL is passed
         );
     END TRY
