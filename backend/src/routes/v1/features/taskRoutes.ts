@@ -4,6 +4,7 @@ import { taskCreateSchema, taskSearchSchema } from '@/services/task/taskValidati
 import * as taskController from '@/api/v1/internal/task/controller';
 import taskPriorityRoutes from './taskPriorityRoutes';
 import taskDueDateRoutes from './taskDueDateRoutes';
+import { taskNotificationRoutes } from './notificationRoutes';
 
 const router = Router();
 
@@ -28,5 +29,11 @@ router.use('/', taskPriorityRoutes);
  * Due date-related routes
  */
 router.use('/', taskDueDateRoutes);
+
+/**
+ * Notification settings routes for a specific task
+ * e.g., /api/v1/internal/task/:id/notification-settings
+ */
+router.use('/:id', taskNotificationRoutes);
 
 export default router;

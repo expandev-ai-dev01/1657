@@ -5,6 +5,7 @@ import { AppLayout } from '@/pages/layouts';
 
 const HomePage = lazy(() => import('@/pages/Home'));
 const SearchPage = lazy(() => import('@/pages/Search'));
+const NotificationSettingsPage = lazy(() => import('@/pages/NotificationSettings'));
 const NotFoundPage = lazy(() => import('@/pages/NotFound'));
 
 export const router = createBrowserRouter([
@@ -25,6 +26,14 @@ export const router = createBrowserRouter([
         element: (
           <Suspense fallback={<LoadingSpinner />}>
             <SearchPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'settings/notifications',
+        element: (
+          <Suspense fallback={<LoadingSpinner />}>
+            <NotificationSettingsPage />
           </Suspense>
         ),
       },

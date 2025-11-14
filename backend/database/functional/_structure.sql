@@ -50,6 +50,72 @@ CREATE TABLE [functional].[task] (
 );
 GO
 
+/**
+ * @table notificationPreference Stores user-specific global notification settings.
+ * @multitenancy true
+ * @softDelete false
+ * @alias ntp
+ */
+CREATE TABLE [functional].[notificationPreference] (
+  [idNotificationPreference] INTEGER IDENTITY(1, 1) NOT NULL,
+  [idAccount] INTEGER NOT NULL,
+  [idUser] INTEGER NOT NULL,
+  [channels] NVARCHAR(100) NOT NULL,
+  [defaultLeadTimeHours] INTEGER NOT NULL,
+  [notifyForOverdueTasks] BIT NOT NULL,
+  [reminderFrequency] NVARCHAR(50) NOT NULL,
+  [notificationsActive] BIT NOT NULL,
+  [quietHourStart] TIME NULL,
+  [quietHourEnd] TIME NULL,
+  [historyRetentionDays] INTEGER NOT NULL,
+  [dateModified] DATETIME2 NOT NULL
+);
+GO
+
+/**
+ * @table taskNotificationSetting Stores task-specific notification overrides.
+ * @multitenancy true
+ * @softDelete false
+ * @alias tns
+ */
+CREATE TABLE [functional].[taskNotificationSetting] (
+  [idTaskNotificationSetting] INTEGER IDENTITY(1, 1) NOT NULL,
+  [idAccount] INTEGER NOT NULL,
+  [idTask] INTEGER NOT NULL,
+  [useCustomSettings] BIT NOT NULL,
+  [customLeadTimeHours] INTEGER NULL,
+  [customChannels] NVARCHAR(100) NULL,
+  [additionalRemindersJson] NVARCHAR(MAX) NULL,
+  [taskNotificationsActive] BIT NOT NULL,
+  [dateModified] DATETIME2 NOT NULL
+);
+GO
+
+/**
+ * @table notification Stores generated notifications for users.
+ * @multitenancy true
+ * @softDelete true
+ * @alias ntf
+ */
+CREATE TABLE [functional].[notification] (
+  [idNotification] INTEGER IDENTITY(1, 1) NOT NULL,
+  [idAccount] INTEGER NOT NULL,
+  [idUser] INTEGER NOT NULL,
+  [idTask] INTEGER NOT NULL,
+  [type] NVARCHAR(50) NOT NULL,
+  [title] NVARCHAR(255) NOT NULL,
+  [content] NVARCHAR(500) NOT NULL,
+  [channels] NVARCHAR(100) NOT NULL,
+  [priority] NVARCHAR(50) NOT NULL,
+  [sendDate] DATETIME2 NOT NULL,
+  [sendStatus] NVARCHAR(50) NOT NULL,
+  [readStatus] NVARCHAR(50) NOT NULL,
+  [dateCreated] DATETIME2 NOT NULL,
+  [dateRead] DATETIME2 NULL,
+  [deleted] BIT NOT NULL
+);
+GO
+
 -- Constraints for functional.category
 
 /**
@@ -216,5 +282,106 @@ GO
  */
 CREATE NONCLUSTERED INDEX [ixTask_Priority]
 ON [functional].[task]([idAccount], [priority])
+WHERE [deleted] = 0;
+GO
+
+-- Constraints for functional.notificationPreference
+
+/**
+ * @primaryKey pkNotificationPreference
+ * @keyType Object
+ */
+ALTER TABLE [functional].[notificationPreference]
+ADD CONSTRAINT [pkNotificationPreference] PRIMARY KEY CLUSTERED ([idNotificationPreference]);
+GO
+
+/**
+ * @default dfNotificationPreference_DateModified Sets the modification date to the current UTC timestamp.
+ */
+ALTER TABLE [functional].[notificationPreference]
+ADD CONSTRAINT [dfNotificationPreference_DateModified] DEFAULT (GETUTCDATE()) FOR [dateModified];
+GO
+
+/**
+ * @index uqNotificationPreference_Account_User Ensures one preference setting per user per account.
+ * @type Unique
+ */
+CREATE UNIQUE NONCLUSTERED INDEX [uqNotificationPreference_Account_User]
+ON [functional].[notificationPreference]([idAccount], [idUser]);
+GO
+
+-- Constraints for functional.taskNotificationSetting
+
+/**
+ * @primaryKey pkTaskNotificationSetting
+ * @keyType Object
+ */
+ALTER TABLE [functional].[taskNotificationSetting]
+ADD CONSTRAINT [pkTaskNotificationSetting] PRIMARY KEY CLUSTERED ([idTaskNotificationSetting]);
+GO
+
+/**
+ * @foreignKey fkTaskNotificationSetting_Task Links setting to a task.
+ * @target functional.task
+ */
+ALTER TABLE [functional].[taskNotificationSetting]
+ADD CONSTRAINT [fkTaskNotificationSetting_Task] FOREIGN KEY ([idTask])
+REFERENCES [functional].[task]([idTask]);
+GO
+
+/**
+ * @default dfTaskNotificationSetting_DateModified Sets the modification date to the current UTC timestamp.
+ */
+ALTER TABLE [functional].[taskNotificationSetting]
+ADD CONSTRAINT [dfTaskNotificationSetting_DateModified] DEFAULT (GETUTCDATE()) FOR [dateModified];
+GO
+
+/**
+ * @index uqTaskNotificationSetting_Account_Task Ensures one setting per task per account.
+ * @type Unique
+ */
+CREATE UNIQUE NONCLUSTERED INDEX [uqTaskNotificationSetting_Account_Task]
+ON [functional].[taskNotificationSetting]([idAccount], [idTask]);
+GO
+
+-- Constraints for functional.notification
+
+/**
+ * @primaryKey pkNotification
+ * @keyType Object
+ */
+ALTER TABLE [functional].[notification]
+ADD CONSTRAINT [pkNotification] PRIMARY KEY CLUSTERED ([idNotification]);
+GO
+
+/**
+ * @foreignKey fkNotification_Task Links notification to a task.
+ * @target functional.task
+ */
+ALTER TABLE [functional].[notification]
+ADD CONSTRAINT [fkNotification_Task] FOREIGN KEY ([idTask])
+REFERENCES [functional].[task]([idTask]);
+GO
+
+/**
+ * @default dfNotification_DateCreated Sets the creation date to the current UTC timestamp.
+ */
+ALTER TABLE [functional].[notification]
+ADD CONSTRAINT [dfNotification_DateCreated] DEFAULT (GETUTCDATE()) FOR [dateCreated];
+GO
+
+/**
+ * @default dfNotification_Deleted Sets the default deleted status to false (0).
+ */
+ALTER TABLE [functional].[notification]
+ADD CONSTRAINT [dfNotification_Deleted] DEFAULT (0) FOR [deleted];
+GO
+
+/**
+ * @index ixNotification_Account_User Optimizes queries for a user's notifications.
+ * @type Search
+ */
+CREATE NONCLUSTERED INDEX [ixNotification_Account_User]
+ON [functional].[notification]([idAccount], [idUser])
 WHERE [deleted] = 0;
 GO

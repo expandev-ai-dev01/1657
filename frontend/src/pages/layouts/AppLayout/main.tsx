@@ -19,6 +19,9 @@ export const AppLayout = () => {
               <NavLink to="/search" className={linkClass}>
                 Search
               </NavLink>
+              <NavLink to="/settings/notifications" className={linkClass}>
+                Settings
+              </NavLink>
             </nav>
           </div>
         </div>
