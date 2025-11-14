@@ -57,7 +57,11 @@ export async function executeProcedure(
   }
 
   const result = await request.execute(procedureName);
-  return result.recordsets;
+
+  if (Array.isArray(result.recordsets)) {
+    return result.recordsets;
+  }
+  return Object.values(result.recordsets);
 }
 
 // Add transaction management functions as needed

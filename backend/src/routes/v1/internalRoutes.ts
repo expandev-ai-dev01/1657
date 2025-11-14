@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authMiddleware } from '@/middleware/authMiddleware';
+import taskRoutes from './features/taskRoutes';
 
 const router = Router();
 
@@ -7,8 +8,6 @@ const router = Router();
 router.use(authMiddleware);
 
 // Feature routes will be added here.
-// Example:
-// import taskRoutes from './features/taskRoutes';
-// router.use('/tasks', taskRoutes);
+router.use('/task', taskRoutes);
 
 export default router;
